@@ -83,15 +83,15 @@ function build_osgearth() {
 }
 
 if [ ! -d ./homebrew ]; then
-    mkdir -p homebrew 
-    curl -L https://github.com/Homebrew/brew/archive/refs/tags/3.2.5.tar.gz | tar xz --strip 1 -C homebrew
-fi
+  mkdir -p homebrew 
+  curl -L https://github.com/Homebrew/brew/archive/refs/tags/3.2.5.tar.gz | tar xz --strip 1 -C homebrew
 
-./homebrew/bin/brew install libzip 
-./homebrew/bin/brew install ffmpeg 
-./homebrew/bin/brew install gdal 
-./homebrew/bin/brew install glew
-./homebrew/bin/brew install protobuf
+  ./homebrew/bin/brew install libzip 
+  ./homebrew/bin/brew install ffmpeg 
+  ./homebrew/bin/brew install gdal 
+  ./homebrew/bin/brew install glew
+  ./homebrew/bin/brew install protobuf
+fi
 
 POSITIONAL=()
 while [[ $# -gt 0 ]]; do
@@ -123,6 +123,10 @@ while [[ $# -gt 0 ]]; do
       CLEAN="true"
       shift
       ;;
+    test)
+      TEST="true"
+      shift
+      ;;
     *)    # unknown option
       echo "Unknown command $1"
       shift # past argument
@@ -142,4 +146,12 @@ fi
 
 if [ "$OSGEARTH" == "true" ]; then
     build_osgearth
+fi
+
+if [ "$TEST" == "true" ]; then
+  export PATH=$PATH:$SCRIPT_DIR/install_$BUILD_TYPE/bin 
+  export OSG_NOTIFY_LEVEL=Debug
+  export OSGEARTH_NOTIFY_LEVEL=Debug
+  export DYLD_LIBRARY_PATH=$SCRIPT_DIR/install_$BUILD_TYPE/lib 
+  osgearth_viewer $SCRIPT_DIR/src/osgEarth/tests/simple.earth
 fi
