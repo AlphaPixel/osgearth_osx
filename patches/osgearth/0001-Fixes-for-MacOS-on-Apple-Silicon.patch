@@ -1,0 +1,61 @@
+From 47a97fd783d4e2e005ea069ea4c726a932fde360 Mon Sep 17 00:00:00 2001
+From: "John W. Terrell" <john@alphapixel.com>
+Date: Thu, 29 Jul 2021 11:11:28 -0700
+Subject: [PATCH] Fixes for MacOS on Apple Silicon
+
+---
+ src/osgEarth/FileUtils.cpp           | 3 +++
+ src/osgEarthDrivers/CMakeLists.txt   | 2 +-
+ src/third_party/tinygltf/tiny_gltf.h | 3 ++-
+ 3 files changed, 6 insertions(+), 2 deletions(-)
+
+diff --git a/src/osgEarth/FileUtils.cpp b/src/osgEarth/FileUtils.cpp
+index 0d35392ae..cacc28e38 100644
+--- a/src/osgEarth/FileUtils.cpp
++++ b/src/osgEarth/FileUtils.cpp
+@@ -99,6 +99,9 @@
+     #if (MAC_OS_X_VERSION_MAX_ALLOWED <= 1040)
+         #define stat64 stat
+     #endif
++
++    #define stat64 stat
++
+ #elif defined(__CYGWIN__) || defined(__FreeBSD__) || (defined(__hpux) && !defined(_LARGEFILE64_SOURCE))
+     #define stat64 stat
+ #endif
+diff --git a/src/osgEarthDrivers/CMakeLists.txt b/src/osgEarthDrivers/CMakeLists.txt
+index d178f951b..ee314acc2 100644
+--- a/src/osgEarthDrivers/CMakeLists.txt
++++ b/src/osgEarthDrivers/CMakeLists.txt
+@@ -59,6 +59,6 @@ if(OSGEARTH_BUILD_ROCKSDB_CACHE)
+     add_subdirectory(cache_rocksdb)
+ endif()
+ 
+-IF(NOT OSGEARTH_BUILD_PLATFORM_IPHONE AND NOT ANDROID)
++IF(NOT OSGEARTH_BUILD_PLATFORM_IPHONE AND NOT ANDROID AND NOT CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL "arm64")
+     add_subdirectory(fastdxt)
+ ENDIF()
+diff --git a/src/third_party/tinygltf/tiny_gltf.h b/src/third_party/tinygltf/tiny_gltf.h
+index 6a1bb42e2..bcc5d1f80 100644
+--- a/src/third_party/tinygltf/tiny_gltf.h
++++ b/src/third_party/tinygltf/tiny_gltf.h
+@@ -58,6 +58,7 @@
+ #include <map>
+ #include <string>
+ #include <vector>
++#include <cmath>
+ 
+ #ifndef TINYGLTF_USE_CPP14
+ #include <functional>
+@@ -6179,7 +6180,7 @@ static void SerializeNumberProperty(const std::string &key, T number,
+   // obj.insert(
+   //    json_object_pair(key, json(static_cast<double>(number))));
+   // obj[key] = static_cast<double>(number);
+-  JsonAddMember(obj, key.c_str(), json(number));
++  JsonAddMember(obj, key.c_str(), json((int)number));
+ }
+ 
+ template <typename T>
+-- 
+2.30.1 (Apple Git-130)
+

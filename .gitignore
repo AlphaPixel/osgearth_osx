@@ -1,0 +1,4 @@
+homebrew
+_build*
+install*/*
+src
