@@ -7,8 +7,8 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 # Version 3.7 dated 2021/07/25
 #OSG_COMMIT="76a58ebaf495cc6656db2094ed39f09704e3c81e"
 
-# Version 3.2 dated 2021/
-#OSGEARTH_COMMIT="6b6ef7500dad4adeadc450cbc86cfd22c5b29b39"
+# Version 3.2 dated 2021/7/29
+OSGEARTH_COMMIT="3c3660ffbf94bfb0f262f1a523102a5fa1b0c412"
 
 OPENGL_PROFILE="GLCORE"
 #OPENGL_PROFILE="GL2"
@@ -210,7 +210,7 @@ if [ "$OSGVIEWER" == "true" ]; then
 fi
 
 if [ "$OSGEARTHVIEWER" == "true" ]; then
-  osgearth_viewer$EXE_SUFFIX $SCRIPT_DIR/src/osgEarth/tests/simple.earth
+  osgearth_viewer$EXE_SUFFIX $SCRIPT_DIR/src/osgEarth/tests/readymap.earth --window 100 100 800 600
 fi
 
 if [ "$SHOW_CAPS" == "true" ]; then

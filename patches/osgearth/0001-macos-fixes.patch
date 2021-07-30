@@ -1,24 +1,26 @@
-From 47a97fd783d4e2e005ea069ea4c726a932fde360 Mon Sep 17 00:00:00 2001
-From: "John W. Terrell" <john@alphapixel.com>
-Date: Thu, 29 Jul 2021 11:11:28 -0700
-Subject: [PATCH] Fixes for MacOS on Apple Silicon
+From c094ce70d98fec0380e8fbe9397414f1333989f2 Mon Sep 17 00:00:00 2001
+From: "John W. Terrell" <john@coolpeoplenetworks.com>
+Date: Fri, 30 Jul 2021 14:05:26 -0700
+Subject: [PATCH] macos-fixes
 
 ---
- src/osgEarth/FileUtils.cpp           | 3 +++
+ src/osgEarth/FileUtils.cpp           | 5 +++++
  src/osgEarthDrivers/CMakeLists.txt   | 2 +-
  src/third_party/tinygltf/tiny_gltf.h | 3 ++-
- 3 files changed, 6 insertions(+), 2 deletions(-)
+ 3 files changed, 8 insertions(+), 2 deletions(-)
 
 diff --git a/src/osgEarth/FileUtils.cpp b/src/osgEarth/FileUtils.cpp
-index 0d35392ae..cacc28e38 100644
+index 0d35392ae..44641784c 100644
 --- a/src/osgEarth/FileUtils.cpp
 +++ b/src/osgEarth/FileUtils.cpp
-@@ -99,6 +99,9 @@
+@@ -99,6 +99,11 @@
      #if (MAC_OS_X_VERSION_MAX_ALLOWED <= 1040)
          #define stat64 stat
      #endif
 +
-+    //#define stat64 stat - This is needed for Apple Silicon/11.4 for some reason.
++    #if __DARWIN_ONLY_64_BIT_INO_T
++        #define stat64 stat
++    #endif
 +
  #elif defined(__CYGWIN__) || defined(__FreeBSD__) || (defined(__hpux) && !defined(_LARGEFILE64_SOURCE))
      #define stat64 stat
