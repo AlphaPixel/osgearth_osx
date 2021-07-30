@@ -1,3 +1,4 @@
+#!/bin/bash
 set -e
 
 BUILD_TYPE=RelWithDebInfo
@@ -9,10 +10,15 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 # Version 3.2 dated 2021/
 #OSGEARTH_COMMIT="6b6ef7500dad4adeadc450cbc86cfd22c5b29b39"
 
-#OPENGL_PROFILE="GL_CORE"
-OPENGL_PROFILE="GL2"
+OPENGL_PROFILE="GLCORE"
+#OPENGL_PROFILE="GL2"
 
 export MACOSX_DEPLOYMENT_TARGET=10.9
+export OSG_NOTIFY_LEVEL=Warn
+export OSGEARTH_NOTIFY_LEVEL=Warn
+export OSG_GL_CONTEXT_VERSION=4.1
+export GDAL_DATA=$SCRIPT_DIR/homebrew/share/gdal
+export OSGEARTH_REX_NO_POOL=1
 
 function build_osg() {
   mkdir -p ./src/
@@ -22,10 +28,12 @@ function build_osg() {
     
     pushd src/osg
 
+    # If requested, check out a specific commit
     if [ "$OSG_COMMIT" != "" ]; then
       git checkout $OSG_COMMIT
     fi
 
+    # Apply any local patches
     if [ -d $SCRIPT_DIR/patches/osg ]; then
       for patch in patches/osg/*.patch
       do
@@ -63,10 +71,12 @@ function build_osgearth() {
     git clone https://github.com/gwaldron/osgearth.git src/osgEarth -b osgearth-3.1
     pushd src/osgEarth
 
+    # If requested, check out a specific commit
     if [ "$OSGEARTH_COMMIT" != "" ]; then
       git checkout $OSGEARTH_COMMIT
     fi
 
+    # Apply any local patches
     if [ -d $SCRIPT_DIR/patches/osgearth ]; then
       for patch in $SCRIPT_DIR/patches/osgearth/*.patch
       do
@@ -78,7 +88,7 @@ function build_osgearth() {
 
   mkdir -p ./_build_$BUILD_TYPE/osgearth
   pushd ./_build_$BUILD_TYPE/osgearth
-  # Need to explicitly include GLEW headers and libraries.  Unsure why.
+  # Need to explicitly include GLEW headers and libraries below (using -DGLEW_*).  Unsure why.
   
   cmake \
     -GXcode \
@@ -104,6 +114,8 @@ function build_osgearth() {
   popd
 }
 
+# If necessary, install a local copy of homebrew that will be used to install
+# dependencies
 if [ ! -d ./homebrew ]; then
   mkdir -p homebrew 
   curl -L https://github.com/Homebrew/brew/archive/refs/tags/3.2.5.tar.gz | tar xz --strip 1 -C homebrew
@@ -115,6 +127,7 @@ if [ ! -d ./homebrew ]; then
   ./homebrew/bin/brew install protobuf
 fi
 
+# Parse script options
 while [[ $# -gt 0 ]]; do
   key="$1"
 
@@ -152,6 +165,10 @@ while [[ $# -gt 0 ]]; do
       OSGEARTHVIEWER="true"
       shift
       ;;
+    showcaps)
+      SHOW_CAPS="true"
+      shift
+      ;;
     *)    # unknown option
       echo "Unknown command $1"
       shift # past argument
@@ -159,39 +176,43 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+# Clean any existing artifacts if requested
 if [ "$CLEAN" == "true" ]; then
   rm -rf $SCRIPT_DIR/src
   rm -rf $SCRIPT_DIR/install_$BUILD_TYPE
   rm -rf $SCRIPT_DIR/_build_$BUILD_TYPE
 fi
 
+# Build OSG is requested
 if [ "$OSG" == "true" ]; then
   build_osg
 fi
 
+# Build osgEarth if requested
 if [ "$OSGEARTH" == "true" ]; then
   build_osgearth
 fi
 
-if [ "$OSGVIEWER" == "true" ]; then
-  export PATH=$PATH:$SCRIPT_DIR/install_$BUILD_TYPE/bin 
-  export OSG_NOTIFY_LEVEL=Debug
-  export OSGEARTH_NOTIFY_LEVEL=Debug
-  export DYLD_LIBRARY_PATH=$SCRIPT_DIR/install_$BUILD_TYPE/lib 
-  export OSG_GL_CONTEXT_VERSION=4.1
+# Run any test applications (osgviewer, osgearth_viewer, etc) if requested.
+EXE_SUFFIX=""
+if [ "$BUILD_TYPE" == "Debug" ]; then
+  EXE_SUFFIX="d"
+fi
 
+export DYLD_LIBRARY_PATH=$SCRIPT_DIR/install_$BUILD_TYPE/lib 
+export PATH=$PATH:$SCRIPT_DIR/install_$BUILD_TYPE/bin 
+
+if [ "$OSGVIEWER" == "true" ]; then
   if [ ! -d $SCRIPT_DIR/data ]; then
     git clone https://github.com/openscenegraph/OpenSceneGraph-Data.git data
   fi
-  osgviewer $SCRIPT_DIR/data/cessna.osg --window 100 100 800 600
-  osgviewer --help
+  osgviewer$EXE_SUFFIX $SCRIPT_DIR/data/cessna.osg --window 100 100 800 600
 fi
 
 if [ "$OSGEARTHVIEWER" == "true" ]; then
-  export PATH=$PATH:$SCRIPT_DIR/install_$BUILD_TYPE/bin 
-  export OSG_NOTIFY_LEVEL=Info
-  export OSGEARTH_NOTIFY_LEVEL=Info
-  export DYLD_LIBRARY_PATH=$SCRIPT_DIR/install_$BUILD_TYPE/lib 
-  export OSG_GL_CONTEXT_VERSION=4.1
-  osgearth_viewer $SCRIPT_DIR/src/osgEarth/tests/simple.earth
+  osgearth_viewer$EXE_SUFFIX $SCRIPT_DIR/src/osgEarth/tests/simple.earth
+fi
+
+if [ "$SHOW_CAPS" == "true" ]; then
+  osgearth_version$EXE_SUFFIX --caps
 fi
