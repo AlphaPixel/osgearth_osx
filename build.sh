@@ -8,16 +8,19 @@ function build_osg() {
 
     if [ ! -d ./src/osg ]; then
         git clone https://github.com/openscenegraph/OpenSceneGraph.git src/osg -b OpenSceneGraph-3.6.5
-        if [ -d $SCRIPT_DIR/patches/osg ]; then
-            pushd src/osg
+        
+        pushd src/osg
 
+        # Version 3.7 dated 2021/07/25
+        git checkout 76a58ebaf495cc6656db2094ed39f09704e3c81e
+
+        if [ -d $SCRIPT_DIR/patches/osg ]; then
             for patch in patches/osg/*.patch
             do
                 patch -p1 < $patch
             done
-
-            popd
         fi
+        popd
     fi
 
     mkdir -p ./_build_$BUILD_TYPE/osg
@@ -123,8 +126,12 @@ while [[ $# -gt 0 ]]; do
       CLEAN="true"
       shift
       ;;
-    test)
-      TEST="true"
+    osgviewer)
+      OSGVIEWER="true"
+      shift
+      ;;
+    osgearthviewer)
+      OSGEARTHVIEWER="true"
       shift
       ;;
     *)    # unknown option
@@ -148,9 +155,22 @@ if [ "$OSGEARTH" == "true" ]; then
     build_osgearth
 fi
 
-if [ "$TEST" == "true" ]; then
+if [ "$OSGVIEWER" == "true" ]; then
   export PATH=$PATH:$SCRIPT_DIR/install_$BUILD_TYPE/bin 
   export OSG_NOTIFY_LEVEL=Debug
+  export OSGEARTH_NOTIFY_LEVEL=Debug
+  export DYLD_LIBRARY_PATH=$SCRIPT_DIR/install_$BUILD_TYPE/lib 
+
+  if [ ! -d $SCRIPT_DIR/data ]; then
+    git clone https://github.com/openscenegraph/OpenSceneGraph-Data.git data
+  fi
+  osgviewer $SCRIPT_DIR/data/cessna.osg --window 100 100 800 600
+  osgviewer --help
+fi
+
+if [ "$OSGEARTHVIEWER" == "true" ]; then
+  export PATH=$PATH:$SCRIPT_DIR/install_$BUILD_TYPE/bin 
+  #export OSG_NOTIFY_LEVEL=Debug
   export OSGEARTH_NOTIFY_LEVEL=Debug
   export DYLD_LIBRARY_PATH=$SCRIPT_DIR/install_$BUILD_TYPE/lib 
   osgearth_viewer $SCRIPT_DIR/src/osgEarth/tests/simple.earth

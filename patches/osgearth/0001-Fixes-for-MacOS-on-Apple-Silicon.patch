@@ -18,7 +18,7 @@ index 0d35392ae..cacc28e38 100644
          #define stat64 stat
      #endif
 +
-+    #define stat64 stat
++    //#define stat64 stat - This is needed for Apple Silicon/11.4 for some reason.
 +
  #elif defined(__CYGWIN__) || defined(__FreeBSD__) || (defined(__hpux) && !defined(_LARGEFILE64_SOURCE))
      #define stat64 stat
