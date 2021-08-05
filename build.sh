@@ -1,14 +1,14 @@
 #!/bin/bash
 set -e
 
-BUILD_TYPE=RelWithDebInfo
+BUILD_TYPE=Release
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
 # Version 3.7 dated 2021/07/25
 #OSG_COMMIT="76a58ebaf495cc6656db2094ed39f09704e3c81e"
 
 # Version 3.2 dated 2021/7/29
-OSGEARTH_COMMIT="3c3660ffbf94bfb0f262f1a523102a5fa1b0c412"
+#OSGEARTH_COMMIT="3c3660ffbf94bfb0f262f1a523102a5fa1b0c412"
 
 OPENGL_PROFILE="GLCORE"
 #OPENGL_PROFILE="GL2"
@@ -16,7 +16,6 @@ OPENGL_PROFILE="GLCORE"
 export MACOSX_DEPLOYMENT_TARGET=10.9
 export OSG_NOTIFY_LEVEL=Warn
 export OSGEARTH_NOTIFY_LEVEL=Warn
-export OSG_GL_CONTEXT_VERSION=4.1
 export GDAL_DATA=$SCRIPT_DIR/homebrew/share/gdal
 export OSGEARTH_REX_NO_POOL=1
 
@@ -47,6 +46,7 @@ function build_osg() {
   pushd ./_build_$BUILD_TYPE/osg
   cmake \
     -GXcode \
+    -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
     -DCMAKE_PREFIX_PATH=$SCRIPT_DIR/homebrew \
     -DCMAKE_INSTALL_PREFIX=$SCRIPT_DIR/install_$BUILD_TYPE \
     -DOSG_BUILD_APPLICATION_BUNDLES=OFF \
@@ -60,7 +60,7 @@ function build_osg() {
     -DCMAKE_MACOSX_RPATH:BOOL=TRUE \
     -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9 \
     ../../src/osg
-  cmake --build . --target install
+  cmake --build . --config $BUILD_TYPE --target install
   popd
 }
 
@@ -92,6 +92,7 @@ function build_osgearth() {
   
   cmake \
     -GXcode \
+    -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
     -DOSG_DIR=$SCRIPT_DIR/_build_$BUILD_TYPE/osg \
     -DCMAKE_PREFIX_PATH="$SCRIPT_DIR/homebrew;$SCRIPT_DIR/install_$BUILD_TYPE" \
     -DGLEW_INCLUDE_DIR="$SCRIPT_DIR/homebrew/include" \
@@ -110,7 +111,7 @@ function build_osgearth() {
     -DCMAKE_MACOSX_RPATH:BOOL=TRUE \
     -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9 \
     ../../src/osgEarth
-  cmake --build . --target install
+  cmake --build . --config $BUILD_TYPE --target install
   popd
 }
 
@@ -171,7 +172,8 @@ while [[ $# -gt 0 ]]; do
       ;;
     *)    # unknown option
       echo "Unknown command $1"
-      shift # past argument
+      shift
+      exit 1
       ;;
   esac
 done
@@ -197,6 +199,8 @@ fi
 EXE_SUFFIX=""
 if [ "$BUILD_TYPE" == "Debug" ]; then
   EXE_SUFFIX="d"
+elif [ "$BUILD_TYPE" == "RelWithDebInfo" ]; then
+  EXE_SUFFIX="rd"
 fi
 
 export DYLD_LIBRARY_PATH=$SCRIPT_DIR/install_$BUILD_TYPE/lib 
