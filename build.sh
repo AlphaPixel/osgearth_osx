@@ -4,14 +4,15 @@ set -e
 BUILD_TYPE=Release
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
+#BASE_OSGEARTH_BRANCH="osgearth-3.1"
+#BASE_OSGEARTH_BRANCH="osgearth-3.2"
+BASE_OSGEARTH_BRANCH="master"
+
 # Version 3.7 dated 2021/07/25
 #OSG_COMMIT="76a58ebaf495cc6656db2094ed39f09704e3c81e"
 
 # Version 3.2 dated 2021/7/29
 #OSGEARTH_COMMIT="3c3660ffbf94bfb0f262f1a523102a5fa1b0c412"
-
-OPENGL_PROFILE="GLCORE"
-#OPENGL_PROFILE="GL2"
 
 export MACOSX_DEPLOYMENT_TARGET=10.9
 export OSG_NOTIFY_LEVEL=Warn
@@ -34,7 +35,7 @@ function build_osg() {
 
     # Apply any local patches
     if [ -d $SCRIPT_DIR/patches/osg ]; then
-      for patch in patches/osg/*.patch
+      for patch in $SCRIPT_DIR/patches/osg/*.patch
       do
         patch -p1 < $patch
       done
@@ -51,14 +52,15 @@ function build_osg() {
     -DCMAKE_INSTALL_PREFIX=$SCRIPT_DIR/install_$BUILD_TYPE \
     -DOSG_BUILD_APPLICATION_BUNDLES=OFF \
     -DOSG_WINDOWING_SYSTEM=Cocoa \
-    -DOPENGL_PROFILE=$OPENGL_PROFILE \
-    -DAPPEND_OPENSCENEGRAPH_VERSION:BOOL=FALSE \
+    -DOPENGL_PROFILE=GLCORE \
     -DCMAKE_CXX_STANDARD:STRING=11 \
     -DCMAKE_CXX_STANDARD_REQUIRED:BOOL=ON \
     -DCMAKE_CXX_EXTENSIONS:BOOL=OFF \
     -DCMAKE_VISIBILITY_INLINES_HIDDEN:BOOL=TRUE \
     -DCMAKE_MACOSX_RPATH:BOOL=TRUE \
     -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9 \
+    -DCMAKE_RELWITHDEBINFO_POSTFIX="" \
+    -DCMAKE_MINSIZEREL_POSTFIX="s" \
     ../../src/osg
   cmake --build . --config $BUILD_TYPE --target install
   popd
@@ -68,7 +70,7 @@ function build_osgearth() {
   mkdir -p ./src/
 
   if [ ! -d ./src/osgEarth ]; then
-    git clone https://github.com/gwaldron/osgearth.git src/osgEarth -b osgearth-3.1
+    git clone https://github.com/gwaldron/osgearth.git src/osgEarth -b $BASE_OSGEARTH_BRANCH
     pushd src/osgEarth
 
     # If requested, check out a specific commit
@@ -158,6 +160,10 @@ while [[ $# -gt 0 ]]; do
       CLEAN="true"
       shift
       ;;
+    osgversion)
+      OSGVERSION="true"
+      shift
+      ;;
     osgviewer)
       OSGVIEWER="true"
       shift
@@ -196,11 +202,8 @@ if [ "$OSGEARTH" == "true" ]; then
 fi
 
 # Run any test applications (osgviewer, osgearth_viewer, etc) if requested.
-EXE_SUFFIX=""
 if [ "$BUILD_TYPE" == "Debug" ]; then
   EXE_SUFFIX="d"
-elif [ "$BUILD_TYPE" == "RelWithDebInfo" ]; then
-  EXE_SUFFIX="rd"
 fi
 
 export DYLD_LIBRARY_PATH=$SCRIPT_DIR/install_$BUILD_TYPE/lib 
@@ -210,7 +213,11 @@ if [ "$OSGVIEWER" == "true" ]; then
   if [ ! -d $SCRIPT_DIR/data ]; then
     git clone https://github.com/openscenegraph/OpenSceneGraph-Data.git data
   fi
-  osgviewer$EXE_SUFFIX $SCRIPT_DIR/data/cessna.osg --window 100 100 800 600
+  osgviewer$EXE_SUFFIX $SCRIPT_DIR/data/cessna.osg --window 100 100 800 600 --gl-version 4.9
+fi
+
+if [ "$OSGVERSION" == "true" ]; then
+  osgversion$EXE_SUFFIX
 fi
 
 if [ "$OSGEARTHVIEWER" == "true" ]; then
