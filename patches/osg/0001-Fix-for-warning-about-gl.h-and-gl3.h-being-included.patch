@@ -1,0 +1,31 @@
+From f39cd315997111e47fbaa70cffbc06323c971a99 Mon Sep 17 00:00:00 2001
+From: "John W. Terrell" <john@coolpeoplenetworks.com>
+Date: Mon, 23 Aug 2021 11:34:42 -0700
+Subject: [PATCH] Fix for warning about gl.h and gl3.h being included.
+
+---
+ src/osg/GL.in | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/src/osg/GL.in b/src/osg/GL.in
+index 2f790be4f..91ce73382 100644
+--- a/src/osg/GL.in
++++ b/src/osg/GL.in
+@@ -50,6 +50,14 @@
+         #define APIENTRY
+     #endif
+ 
++    // Fix for warnings from compiler about:
++    // warning: #warning gl.h and gl3.h are both included. Compiler will not invoke errors if using removed OpenGL functionality. [-Wcpp]
++    #if defined(__APPLE__) && defined(OSG_GL3_AVAILABLE)
++        #define __gl_h_
++        // Need to define GL_TEXTURE_RECTANGLE_EXT since the above will prevent it from being defined.
++        #define GL_TEXTURE_RECTANGLE_EXT                             0x84F5
++    #endif
++
+ #else // WIN32
+ 
+     #if defined(__CYGWIN__) || defined(__MINGW32__)
+-- 
+2.30.1 (Apple Git-130)
+
