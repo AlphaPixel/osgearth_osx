@@ -120,13 +120,14 @@ function build_osgearth() {
 if [ ! -d ./homebrew ]; then
   mkdir -p homebrew 
   curl -L https://github.com/Homebrew/brew/archive/refs/tags/3.2.5.tar.gz | tar xz --strip 1 -C homebrew
-
-  ./homebrew/bin/brew install libzip 
-  ./homebrew/bin/brew install ffmpeg 
-  ./homebrew/bin/brew install gdal 
-  ./homebrew/bin/brew install glew
-  ./homebrew/bin/brew install protobuf
 fi
+
+./homebrew/bin/brew install libzip 
+./homebrew/bin/brew install tcl-tk
+./homebrew/bin/brew install ffmpeg 
+./homebrew/bin/brew install gdal 
+./homebrew/bin/brew install glew
+./homebrew/bin/brew install protobuf
 
 # Parse script options
 while [[ $# -gt 0 ]]; do
