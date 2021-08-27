@@ -46,7 +46,6 @@ function build_osg() {
   mkdir -p ./_build_$BUILD_TYPE/osg
   pushd ./_build_$BUILD_TYPE/osg
   cmake \
-    -GXcode \
     -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
     -DCMAKE_PREFIX_PATH=$SCRIPT_DIR/homebrew \
     -DCMAKE_INSTALL_PREFIX=$SCRIPT_DIR/install_$BUILD_TYPE \
@@ -93,7 +92,6 @@ function build_osgearth() {
   # Need to explicitly include GLEW headers and libraries below (using -DGLEW_*).  Unsure why.
   
   cmake \
-    -GXcode \
     -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
     -DOSG_DIR=$SCRIPT_DIR/_build_$BUILD_TYPE/osg \
     -DCMAKE_PREFIX_PATH="$SCRIPT_DIR/homebrew;$SCRIPT_DIR/install_$BUILD_TYPE" \
